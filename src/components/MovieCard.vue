@@ -19,7 +19,7 @@
         >
           <svg viewBox="0 0 24 24" class="card-heart-icon" aria-hidden="true" focusable="false">
             <path
-              d="M12.1 21s-7.4-4.35-9.2-6.2C-0.1 11.6 2.1 6 6.6 6c2.4 0 3.9 1.6 4.5 2.3C11.5 7.6 13 6 15.4 6 19.9 6 22.1 11.6 21.1 14.8c-1.8 1.85-9 6.2-9 6.2z"
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.53L12 21.35z"
               fill="none"
               stroke="currentColor"
               stroke-width="1.4"
@@ -240,13 +240,20 @@ watch(() => authStore.user, async () => {
 }
 
 .card-fav-button.active {
-  color: #ff6b81;
+  color: #ffffff;
   opacity: 1;
-  background: rgba(255,107,129,0.08);
+  background: #ff6b81; /* filled background */
+  box-shadow: 0 6px 14px rgba(255,107,129,0.18);
 }
 
 .card-heart-icon { width: 18px; height: 18px; display: block }
 .card-heart-icon path { vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; fill: none }
+
+/* When active, fill the heart with a contrasting color */
+.card-fav-button.active .card-heart-icon path {
+  fill: currentColor;
+  stroke: none;
+}
 
 .poster-image {
   position: absolute;

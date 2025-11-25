@@ -10,6 +10,7 @@
       <nav class="nav-menu">
         <router-link to="/" class="nav-link">Home</router-link>
         <router-link to="/search" class="nav-link">Search</router-link>
+        <router-link to="/favorites" class="nav-link">Favorites</router-link>
       </nav>
 
       <!-- Search Bar (in header) -->
