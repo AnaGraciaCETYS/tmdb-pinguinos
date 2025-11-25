@@ -5,7 +5,6 @@
     <main class="main-content">
       <section class="page-header">
         <h1>Favorites</h1>
-        <p>Your saved movies</p>
       </section>
 
       <div v-if="loading" class="loading-container">
@@ -21,7 +20,7 @@
       </div>
 
       <div v-if="movies.length > 0">
-        <MovieRow title="Favorites" :movies="movies" />
+        <MovieRow title="Your saved movies" :movies="movies" />
       </div>
     </main>
   </div>
