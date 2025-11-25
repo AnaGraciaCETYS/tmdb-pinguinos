@@ -61,10 +61,11 @@
                     ★
                   </span>
                 </div>
-                <span v-if="userRating" class="rating-text">
-                  {{ userRating }} / 5
-                </span>
+                <span v-if="isSavingRating" class="rating-text">Saving...</span>
+                <span v-else-if="saveSuccess" class="rating-text">Saved ✓</span>
+                <span v-else-if="userRating" class="rating-text">{{ userRating }} / 5</span>
                 <span v-else class="rating-text hint">Click to rate</span>
+                <p v-if="saveError" class="error">{{ saveError }}</p>
               </div>
               <div v-else class="login-prompt">
                 <p class="rating-label">Rate this movie</p>
@@ -105,6 +106,8 @@ const movie = computed(() => moviesStore.currentMovie)
 const userRating = ref(null)
 const hoveredStar = ref(0)
 const isSavingRating = ref(false)
+const saveSuccess = ref(false)
+const saveError = ref(null)
 
 const posterUrl = computed(() => {
   if (!movie.value?.poster_path) return '/placeholder-poster.jpg'
@@ -134,24 +137,43 @@ function resetHover() {
 async function setUserRating(rating) {
   if (!authStore.user || isSavingRating.value) return
 
+  if (!movie.value || !movie.value.id) {
+    console.warn('Movie not loaded yet')
+    return
+  }
+
   try {
     isSavingRating.value = true
-    const movieId = route.params.id
-    await saveUserRating(authStore.user.uid, movieId, rating)
+    // Use numeric movie id to keep consistent doc ids
+    const movieId = parseInt(movie.value.id)
+    // Optimistic UI update
     userRating.value = rating
+    hoveredStar.value = 0
+    await saveUserRating(authStore.user.uid, movieId, rating)
+    // show brief success indicator
+    saveSuccess.value = true
+    saveError.value = null
+    setTimeout(() => (saveSuccess.value = false), 1500)
   } catch (error) {
     console.error('Error saving rating:', error)
-    alert('Error saving rating. Please try again.')
+    // expose error to UI to help debugging (display message)
+    saveError.value = error?.message || String(error)
+    // revert optimistic update
+    await loadUserRating()
   } finally {
     isSavingRating.value = false
   }
 }
 
 async function loadUserRating() {
-  if (!authStore.user || !movie.value) return
+  if (!authStore.user || !movie.value || !movie.value.id) {
+    userRating.value = null
+    return
+  }
 
   try {
-    const rating = await getUserRating(authStore.user.uid, movie.value.id)
+    const movieId = parseInt(movie.value.id)
+    const rating = await getUserRating(authStore.user.uid, movieId)
     userRating.value = rating
   } catch (error) {
     console.error('Error loading user rating:', error)
