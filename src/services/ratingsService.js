@@ -5,7 +5,8 @@ import {
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  serverTimestamp
 } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 
@@ -22,17 +23,19 @@ export async function saveUserRating(userId, movieId, rating) {
   }
 
   try {
-    const ratingRef = doc(db, 'ratings', `${userId}_${movieId}`)
+    const id = `${userId}_${parseInt(movieId)}`
+    const ratingRef = doc(db, 'ratings', id)
     await setDoc(ratingRef, {
       userId,
       movieId: parseInt(movieId),
-      rating,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      rating: parseInt(rating),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     })
-    return { success: true }
+    return { success: true, id }
   } catch (error) {
     console.error('Error saving rating:', error)
+    // rethrow so callers can inspect the error message/code
     throw error
   }
 }
@@ -49,11 +52,13 @@ export async function getUserRating(userId, movieId) {
   }
 
   try {
-    const ratingRef = doc(db, 'ratings', `${userId}_${movieId}`)
+    const id = `${userId}_${parseInt(movieId)}`
+    const ratingRef = doc(db, 'ratings', id)
     const ratingSnap = await getDoc(ratingRef)
-    
+
     if (ratingSnap.exists()) {
-      return ratingSnap.data().rating
+      const data = ratingSnap.data()
+      return data.rating ?? null
     }
     return null
   } catch (error) {

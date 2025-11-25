@@ -28,6 +28,18 @@ if (isFirebaseConfigured) {
     auth = getAuth(app)
     db = getFirestore(app)
     storage = getStorage(app)
+    // Helpful debug: indicate Firebase services were initialized
+    try {
+      // don't log sensitive values; only log presence as booleans
+      console.info('Firebase initialized:', {
+        app: !!app,
+        auth: !!auth,
+        db: !!db,
+        storage: !!storage
+      })
+    } catch (e) {
+      // ignore logging errors
+    }
   } catch (error) {
     console.warn('Firebase initialization error:', error)
   }
