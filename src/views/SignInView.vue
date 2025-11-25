@@ -19,7 +19,7 @@
 
         <div class="actions">
           <button class="btn btn-ghost" type="submit" :disabled="authStore.loading">Sign In</button>
-          <button class="btn btn-primary" type="button" @click="onRegister" :disabled="authStore.loading">Register</button>
+          <button class="btn btn-primary" type="button" @click="onRegister" :disabled="authStore.loading">Sign Up</button>
         </div>
       </form>
 
