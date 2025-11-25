@@ -32,9 +32,9 @@
 
       <!-- Auth Section -->
       <div class="auth-section">
-        <button v-if="!authStore.user" @click="showLogin = true" class="auth-button login">
+        <router-link v-if="!authStore.user" to="/signin" class="auth-button login">
           Sign In
-        </button>
+        </router-link>
         <div v-else class="user-menu">
           <span class="user-email">{{ authStore.user.email }}</span>
           <button @click="handleLogout" class="auth-button logout">
@@ -55,7 +55,6 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const searchQuery = ref('')
-const showLogin = ref(false)
 
 function handleSearch() {
   // Real-time search could be implemented here
