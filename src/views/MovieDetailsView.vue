@@ -24,6 +24,25 @@
               class="movie-poster"
               @error="handleImageError"
             />
+            <!-- Favorite heart button -->
+            <button
+              class="fav-button"
+              :class="{ active: isFavorite }"
+              @click="toggleFavorite"
+              :aria-pressed="isFavorite"
+              title="Add to favorites"
+            >
+              <svg viewBox="0 0 24 24" class="heart-icon" aria-hidden="true" focusable="false">
+                <path
+                  d="M12.1 21s-7.4-4.35-9.2-6.2C-0.1 11.6 2.1 6 6.6 6c2.4 0 3.9 1.6 4.5 2.3C11.5 7.6 13 6 15.4 6 19.9 6 22.1 11.6 21.1 14.8c-1.8 1.85-9 6.2-9 6.2z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
             
             <!-- Rating Stars -->
             <div class="rating-container">
@@ -98,6 +117,10 @@ import { getImageUrl } from '@/utils/constants'
 import { saveUserRating, getUserRating } from '@/services/ratingsService'
 import AppHeader from '@/components/AppHeader.vue'
 
+// Firestore imports for favorites
+import { db } from '@/config/firebase'
+import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+
 const route = useRoute()
 const moviesStore = useMoviesStore()
 const authStore = useAuthStore()
@@ -108,6 +131,62 @@ const hoveredStar = ref(0)
 const isSavingRating = ref(false)
 const saveSuccess = ref(false)
 const saveError = ref(null)
+
+// Favorite state
+const isFavorite = ref(false)
+const isSavingFavorite = ref(false)
+
+function favDocRef(uid, movieId) {
+  return doc(db, 'users', String(uid), 'favorites', String(movieId))
+}
+
+async function loadFavorite() {
+  if (!authStore.user || !db || !movie.value) {
+    isFavorite.value = false
+    return
+  }
+  try {
+    const ref = favDocRef(authStore.user.uid, movie.value.id)
+    const snapshot = await getDoc(ref)
+    isFavorite.value = snapshot.exists()
+  } catch (e) {
+    console.error('Error loading favorite state:', e)
+    isFavorite.value = false
+  }
+}
+
+async function toggleFavorite() {
+  if (!authStore.user) {
+    alert('Please sign in to save favorites.')
+    return
+  }
+  if (!movie.value || !db) return
+
+  if (isSavingFavorite.value) return
+  isSavingFavorite.value = true
+  const uid = authStore.user.uid
+  const ref = favDocRef(uid, movie.value.id)
+
+  try {
+    if (isFavorite.value) {
+      await deleteDoc(ref)
+      isFavorite.value = false
+    } else {
+      await setDoc(ref, {
+        id: movie.value.id,
+        title: movie.value.title,
+        poster_path: movie.value.poster_path || null,
+        addedAt: serverTimestamp()
+      })
+      isFavorite.value = true
+    }
+  } catch (e) {
+    console.error('Error toggling favorite:', e)
+    alert('Could not update favorites. Try again.')
+  } finally {
+    isSavingFavorite.value = false
+  }
+}
 
 const posterUrl = computed(() => {
   if (!movie.value?.poster_path) return '/placeholder-poster.jpg'
@@ -194,6 +273,9 @@ onMounted(async () => {
   if (authStore.user) {
     await loadUserRating()
   }
+
+  // Load favorite state
+  await loadFavorite()
 })
 
 // Watch for movie changes and load rating
@@ -201,14 +283,18 @@ watch(() => movie.value, async (newMovie) => {
   if (newMovie && authStore.user) {
     await loadUserRating()
   }
+  // load favorite whenever the movie changes
+  await loadFavorite()
 })
 
 // Watch for auth changes
 watch(() => authStore.user, async (newUser) => {
   if (newUser && movie.value) {
     await loadUserRating()
+  await loadFavorite()
   } else {
     userRating.value = null
+  isFavorite.value = false
   }
 })
 </script>
@@ -258,6 +344,58 @@ watch(() => authStore.user, async (newUser) => {
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
   margin-bottom: 1.5rem;
+}
+
+/* Favorite button styles: hidden by default, visible on poster hover */
+.fav-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.02);
+  color: rgba(255,255,255,0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;                 /* hidden by default */
+  transform: scale(0.94);
+  transition: opacity 180ms ease, transform 160ms ease, background 120ms ease, color 120ms ease;
+  pointer-events: none;       /* prevent interaction when invisible */
+}
+
+.poster-section:hover .fav-button {
+  opacity: 0.55;
+  pointer-events: auto;
+}
+
+.fav-button:hover {
+  opacity: 1;
+  transform: scale(1.06);
+  background: rgba(255,255,255,0.06);
+}
+
+.fav-button.active {
+  color: #ff6b81; /* pink/red for favorited */
+  opacity: 1;
+  background: rgba(255,107,129,0.08);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+}
+
+.heart-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.heart-icon path {
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .rating-container {
