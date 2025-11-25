@@ -4,11 +4,11 @@ A modern movie streaming web application built with Vue 3, featuring TMDB API in
 
 ## Features
 
-- 🎬 Browse popular, top-rated, now playing, and upcoming movies
-- 🔍 Search movies
-- 🔐 User authentication with Firebase
-- 📱 Responsive design
-- 🎨 Modern UI/UX
+- Browse popular, top-rated, now playing, and upcoming movies
+- Search movies
+- User authentication with Firebase
+- Responsive design
+- Modern UI/UX
 
 ## Tech Stack
 
